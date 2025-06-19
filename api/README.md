@@ -1,0 +1,2 @@
+# otakuStore
+Pasta oficial
