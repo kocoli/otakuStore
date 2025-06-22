@@ -13,7 +13,7 @@ class ImageUploader
     {
         chdir("../");
         $this->uploadDir = $uploadDir;
-        //$this->image = new Image($this->uploadDir, "images");
+        $this->image = new Image($this->uploadDir, "images");
     }
 
     public function upload($file)

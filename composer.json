@@ -1,0 +1,8 @@
+{
+    "require": {
+        "league/plates": "^3.6",
+        "firebase/php-jwt": "^6.11",
+        "coffeecode/router": "^2.0",
+        "coffeecode/uploader": "^2.0"
+    }
+}

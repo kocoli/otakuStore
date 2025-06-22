@@ -7,9 +7,9 @@ namespace Composer\Autoload;
 class ComposerStaticInitbbb8275d1c6cbe50d3de2fe8af0f3af6
 {
     public static $prefixLengthsPsr4 = array (
-        'S' => 
+        'L' => 
         array (
-            'Source\\' => 7,
+            'League\\Plates\\' => 14,
         ),
         'F' => 
         array (
@@ -17,18 +17,23 @@ class ComposerStaticInitbbb8275d1c6cbe50d3de2fe8af0f3af6
         ),
         'C' => 
         array (
+            'CoffeeCode\\Uploader\\' => 20,
             'CoffeeCode\\Router\\' => 18,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Source\\' => 
+        'League\\Plates\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/source',
+            0 => __DIR__ . '/..' . '/league/plates/src',
         ),
         'Firebase\\JWT\\' => 
         array (
             0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
+        ),
+        'CoffeeCode\\Uploader\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/coffeecode/uploader/src',
         ),
         'CoffeeCode\\Router\\' => 
         array (
