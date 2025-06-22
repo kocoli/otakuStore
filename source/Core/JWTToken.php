@@ -2,54 +2,51 @@
 
 namespace Source\Core;
 
+use DateTimeImmutable;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use \DateTimeImmutable;
-use \Exception;
+use Exception;
 
-class JWTToken
+class TokenJWT
 {
-    private $secretKey = "sequencia_que_ninguém_conhece";
-    private $headerJWT = "HS512";
-    private $url = "http://localhost:8080/inf-3at-2025";
+    public $token;
+    private $secretKey = 'sequencia_secreta_que_ninguem_sabe';
 
-    public function create($payLoad): string
+    public function create (array $dataInfo) : string
     {
         $tokenId    = base64_encode(random_bytes(16));
         $issuedAt   = new DateTimeImmutable();
-        $expire     = $issuedAt->modify('+90 minutes')->getTimestamp(); // 60 minutos
+        $expire     = $issuedAt->modify('+90 minutes')->getTimestamp();
+        $serverName = url();
 
-        // Create the token as an array
         $data = [
-            'iat'  => $issuedAt->getTimestamp(), // Issued at: time when the token was generated
-            'jti'  => $tokenId,                  // Json Token Id: an unique identifier for the token
-            'iss'  => $this->url,                // Issuer
-            'nbf'  => $issuedAt->getTimestamp(), // Not before
-            'exp'  => $expire,                   // Expire
-            'data' => $payLoad
+            'iat'  => $issuedAt->getTimestamp(),
+            'jti'  => $tokenId,
+            'iss'  => $serverName,
+            'nbf'  => $issuedAt->getTimestamp(),
+            'exp'  => $expire,
+            'data' => $dataInfo
         ];
 
-        // Encode the array to a JWT string.
         return JWT::encode(
-            $data,         //Data to be encoded in the JWT
-            $this->secretKey, // The signing key
-            $this->headerJWT  // Algorithm used to sign the token, see https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40#section-3
+            $data,
+            $this->secretKey,
+            'HS512'
         );
     }
 
-    public function decode($token): bool | object
+    public function verify (string $token) : bool
     {
         try {
-            $token = JWT::decode($token, new Key($this->secretKey, $this->headerJWT));
+            //$this->token = JWT::decode((string)$token, $this->secretKey, ['HS512']);
+            $this->token = JWT::decode($token, new Key($this->secretKey, 'HS512'));
             $now = new DateTimeImmutable();
-            $serverName = $this->url;
-
-            if ($token->iss !== $serverName || $token->nbf > $now->getTimestamp() || $token->exp < $now->getTimestamp())
-            {
+            $serverName = url();
+            if ($this->token->iss !== $serverName || $this->token->nbf > $now->getTimestamp() || $this->token->exp < $now->getTimestamp()) {
                 return false;
             }
-            return $token;
-        } catch (Exception) {
+            return true;
+        } catch (Exception $exception) {
             return false;
         }
     }

@@ -2,161 +2,61 @@
 
 namespace Source\Core;
 
-use Source\Core\Connect;
 use PDO;
 use PDOException;
-use ReflectionClass;
 
 abstract class Model
 {
-    protected $table;
-    protected $errorMessage;
 
-    public function insert(): bool
+    protected $entity;
+
+    private $message;
+
+    public function getMessage(): ?string
     {
-        $reflection = new ReflectionClass($this);
-        $properties = $reflection->getProperties();
-        $columns = [];
-        $placeholders = [];
-        $values = [];
-
-        foreach ($properties as $property) {
-            $property->setAccessible(true);
-            $name = $property->getName();
-            $value = $property->getValue($this);
-            if ($name !== "table" && $name !== "errorMessage") {
-                $columns[] = $name;
-                $placeholders[] = ":{$name}";
-                $values[$name] = $value;
-            }
-        }
-
-        $columns = implode(", ", $columns);
-        $placeholders = implode(", ", $placeholders);
-        $sql = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
-
-        try {
-            $stmt = Connect::getInstance()->prepare($sql);
-            foreach ($values as $column => $value) {
-                if(is_null($value)){
-                    $stmt->bindValue($column, 'NULL', PDO::PARAM_NULL);
-                    continue;
-                }
-                if(is_int($value)) {
-                    $stmt->bindValue($column, $value, PDO::PARAM_INT);
-                    continue;
-                }
-                $stmt->bindValue($column, $value);
-
-            }
-            if(!$stmt->execute()){
-                return false;
-            }
-            $id = Connect::getInstance()->lastInsertId();
-            $reflection->getProperty('id')->setAccessible(true);
-            $reflection->getProperty('id')->setValue($this, $id);
-            return true;
-        } catch (PDOException $e) {
-            $this->errorMessage = "Erro ao inserir o registro: {$e->getMessage()}";
-            return false;
-        }
+        return $this->message;
     }
 
-    public function updateById (): bool
+    public function selectAll (): ?array
     {
-        $reflection = new ReflectionClass($this);
-        $properties = $reflection->getProperties();
-        $columns = [];
-        $values = [];
+        $conn = Connect::getInstance();
+        $query = "SELECT * FROM {$this->entity}";
+        return $conn->query($query)->fetchAll();
+    }
 
-        foreach ($properties as $property) {
-            $property->setAccessible(true);
-            $name = $property->getName();
-            $value = $property->getValue($this);
-            if ($name !== "table" && $name !== "errorMessage") {
-                $columns[] = "{$name} = :{$name}";
-                $values[$name] = $value;
-            }
+    public function selectById (int $id): ?object
+    {
+        $conn = Connect::getInstance();
+        $query = "SELECT * 
+                  FROM {$this->entity}
+                  WHERE id = {$id}";
+        return $conn->query($query)->fetch();
+    }
+    public function insert(): ?int
+    {
+        $values = get_object_vars($this);// pegar os valores dos atributos e inserir em um array
+        array_shift($values);
+        array_shift($values);
+
+        foreach ($values as $key => $value){
+            echo "{$value} => {$key} <br>";
+            $values[$key] = is_null($value) ? "NULL" : "'{$value}'";
         }
 
-        $columns = implode(", ", $columns);
-        $sql = "UPDATE {$this->table} SET {$columns} WHERE id = :id";
+        $valuesString = implode(",", $values);
+
+        $conn = Connect::getInstance();
+        $query = "INSERT INTO {$this->entity} VALUES ({$valuesString})";
 
         try {
-            $stmt = Connect::getInstance()->prepare($sql);
-            foreach ($values as $column => $value) {
-                if(is_null($value)){
-                    $stmt->bindValue($column, 'NULL', PDO::PARAM_NULL);
-                } else if(is_int($value)) {
-                    $stmt->bindValue($column, $value, PDO::PARAM_INT);
-                } else {
-                    $stmt->bindValue($column, $value, PDO::PARAM_STR);
-                }
-            }
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            $this->errorMessage = "Erro ao inserir o registro: {$e->getMessage()}";
+            $result = $conn->query($query);
+            $this->message = "Registro inserido com sucesso!";
+            return $result ? $conn->lastInsertId() : null;
+        } catch (PDOException $exception) {
+            $this->message = "Erro ao inserir: {$exception->getMessage()}";
             return false;
         }
 
-    }
-
-    public function findAll(): array
-    {
-        try {
-            $stmt = Connect::getInstance()->query("SELECT * FROM {$this->table}");
-            return $stmt->fetchAll();
-        } catch (PDOException $e) {
-            $this->errorMessage = "Erro ao inserir o registro: {$e->getMessage()}";
-            return [];
-        }
-    }
-
-    public function findById (int $id): bool
-    {
-        try {
-            $stmt = Connect::getInstance()
-                ->prepare("SELECT * FROM {$this->table} WHERE id = :id");
-            $stmt->bindValue("id",$id);
-            $stmt->execute();
-            $result = $stmt->fetch();
-            if (!$result) {
-                return false;
-            }
-            $reflection = new ReflectionClass($this);
-            foreach ($result as $column => $value) {
-                if ($reflection->hasProperty($column)) {
-                    $property = $reflection->getProperty($column);
-                    $property->setAccessible(true);
-                    $property->setValue($this, $value);
-                }
-            }
-            return true;
-        } catch (PDOException $e) {
-            $this->errorMessage = "Erro ao inserir o registro: {$e->getMessage()}";
-            return false;
-        }
-    }
-
-    public function deleteById (int $id): bool
-    {
-        try {
-            $stmt = Connect::getInstance()->prepare("DELETE FROM {$this->table} WHERE id = :id");
-            $stmt->bindParam("id",$id);
-            $stmt->execute();
-            if ($stmt->rowCount() == 0) {
-                return false;
-            }
-            return true;
-        } catch (PDOException $e) {
-            $this->errorMessage = "Erro ao excluir o registro: {$e->getMessage()}";
-            return false;
-        }
-    }
-
-    public function getErrorMessage (): ?string
-    {
-        return $this->errorMessage;
     }
 
 }
