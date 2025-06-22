@@ -14,14 +14,11 @@ class Seller extends User
         string $name = null,
         string $email = null,
         string $password = null,
-        string $photo = null,
         string $storeName = null,
         string $cnpj = null,
-        float $rating = null,
-        string $address = null,
-        string $phone = null
+        float $rating = null
     ) {
-        parent::__construct($id, $idType, $name, $email, $password, $photo, $address, $phone);
+        parent::__construct($id, $idType, $name, $email, $password);
         $this->storeName = $storeName;
         $this->cnpj = $cnpj;
         $this->rating = $rating;

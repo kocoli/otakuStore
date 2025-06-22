@@ -13,13 +13,10 @@ class Supplier extends User
         string $name = null,
         string $email = null,
         string $password = null,
-        string $photo = null,
         string $companyName = null,
         string $cnpj = null,
-        string $address = null,
-        string $phone = null
     ) {
-        parent::__construct($id, $idType, $name, $email, $password, $photo, $address, $phone);
+        parent::__construct($id, $idType, $name, $email, $password);
         $this->companyName = $companyName;
         $this->cnpj = $cnpj;
     }
